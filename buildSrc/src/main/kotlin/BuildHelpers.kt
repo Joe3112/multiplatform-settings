@@ -116,6 +116,10 @@ private fun KotlinMultiplatformExtension.linkAppleSourceSets() {
                 kotlin.srcDirs(*apple64Test.kotlin.srcDirs.toTypedArray())
             }
         }
+        val iosX64Test by getting {
+            kotlin.srcDirs(*appleTest.kotlin.srcDirs.toTypedArray())
+            kotlin.srcDirs(*apple64Test.kotlin.srcDirs.toTypedArray())
+        }
 
         targets
             .withType<KotlinNativeTarget>()
