@@ -1,0 +1,4 @@
+headers = sdbm.h
+headerFilter = **
+package = com.russhwolf.settings.cinterop
+linkerOpts.linux = -L/usr/lib64 -L/usr/lib/x86_64-mlinux-gnu -Lsrc/sdbm
