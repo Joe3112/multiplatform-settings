@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Russell Wolf, Andrew Mikhaylov
+ * Copyright 2020 Russell Wolf
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,28 @@
  * limitations under the License.
  */
 
-@file:UseExperimental(ExperimentalUnsignedTypes::class)
+@file:OptIn(ExperimentalUnsignedTypes::class)
 
 package com.russhwolf.settings
 
-import kotlinx.cinterop.*
-import platform.windows.*
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.convert
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.ptr
+import kotlinx.cinterop.reinterpret
+import kotlinx.cinterop.toKString
+import kotlinx.cinterop.value
+import platform.windows.DWORD
+import platform.windows.ERROR_SUCCESS
+import platform.windows.FORMAT_MESSAGE_ALLOCATE_BUFFER
+import platform.windows.FORMAT_MESSAGE_FROM_SYSTEM
+import platform.windows.FORMAT_MESSAGE_IGNORE_INSERTS
+import platform.windows.FormatMessageW
+import platform.windows.LANG_NEUTRAL
+import platform.windows.LPWSTRVar
+import platform.windows.LocalFree
+import platform.windows.SUBLANG_DEFAULT
+import platform.windows.WCHARVar
 
 internal fun formatMessageFromSystem(errorCode: DWORD): String = memScoped {
     val errorText = alloc<LPWSTRVar>()
@@ -33,8 +49,9 @@ internal fun formatMessageFromSystem(errorCode: DWORD): String = memScoped {
         errorCode,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT).convert(),
         reinterpret.ptr,
-        0,
-        null)
+        0u,
+        null
+    )
 
     val message = errorText.value!!.toKString().trim()
     LocalFree(errorText.value)
@@ -42,15 +59,10 @@ internal fun formatMessageFromSystem(errorCode: DWORD): String = memScoped {
     return "[0x${errorCode.toString(16).padStart(8, '0')}] $message"
 }
 
-internal fun lastErrorMessage(): String = formatMessageFromSystem(GetLastError())
-
 internal fun MAKELANGID(primary: Int, sub: Int) =
     sub.toUInt() shl 10 or primary.toUInt()
 
-internal fun Int.checkWinApiSuccess(message: (Int) -> String) {
-    if (this != ERROR_SUCCESS) error("${message(this)}: ${formatMessageFromSystem(convert())}")
+internal fun Int.checkWinApiSuccess(vararg expectedErrors: Int, message: (Int) -> String) {
+    if (this != ERROR_SUCCESS && this !in expectedErrors) error("${message(this)}: ${formatMessageFromSystem(convert())}")
 }
 
-internal fun UInt.checkWinApiSuccess(message: (UInt) -> String) {
-    if (this != ERROR_SUCCESS.toUInt()) error("${message(this)}: ${formatMessageFromSystem(this)}")
-}

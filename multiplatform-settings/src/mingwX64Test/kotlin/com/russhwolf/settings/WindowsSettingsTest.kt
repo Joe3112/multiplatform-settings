@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Russell Wolf, Andrew Mikhaylov
+ * Copyright 2020 Russell Wolf
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,26 @@
  * limitations under the License.
  */
 
-@file:UseExperimental(ExperimentalWinApi::class)
+@file:OptIn(ExperimentalWinApi::class)
 
 package com.russhwolf.settings
-/*
+
+import kotlinx.cinterop.convert
+import platform.windows.ERROR_SUCCESS
+import kotlin.test.Test
+import kotlin.test.assertEquals
+
 class WindowsSettingsTest : BaseSettingsTest(
-    platformFactory = object : Settings.Factory {
-        override fun create(name: String?): WindowsSettings {
-            return WindowsSettings("multiplatform-settings-test", name ?: "default")
-        }
-    },
+    platformFactory = WindowsSettings.Factory("multiplatform-settings-test"),
     hasListeners = false
-)
-*/
+) {
+    @Test
+    fun formatMessageFromSystem() {
+        assertEquals(
+            "[0x00000000] The operation completed successfully.",
+            formatMessageFromSystem(ERROR_SUCCESS.convert())
+        )
+    }
+
+    // TODO other win-specific test cases?
+}
